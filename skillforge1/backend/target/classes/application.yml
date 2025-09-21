@@ -1,0 +1,16 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb+srv://manideepgonugunta1802_db_user:jYCfBLvmlBbsO1wQ@cluster0.re07yd1.mongodb.net/skillforge?retryWrites=true&w=majority&appName=Cluster0
+  jackson:
+    default-property-inclusion: non_null
+
+jwt:
+  secret: skillforge_jwt_secret_key
+  expiration: 86400000
+
+openai:
+  api-key: your_openai_api_key_here
+
+server:
+  port: 8080

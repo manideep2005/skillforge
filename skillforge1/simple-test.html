@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SkillForge Simple Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .role-card { background: #667eea; color: white; padding: 20px; margin: 10px; border-radius: 10px; cursor: pointer; }
+        .auth-form { background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 10px; }
+        input, button { padding: 10px; margin: 5px; width: 200px; }
+        button { background: #667eea; color: white; border: none; cursor: pointer; }
+        .dashboard { background: #e8f5e8; padding: 20px; margin: 20px 0; border-radius: 10px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SkillForge Test Page</h1>
+        
+        <!-- Welcome Section -->
+        <div id="welcome">
+            <h2>Select Your Role</h2>
+            <div class="role-card" onclick="selectRole('student')">🎓 Student</div>
+            <div class="role-card" onclick="selectRole('instructor')">👨🏫 Instructor</div>
+            <div class="role-card" onclick="selectRole('admin')">⚙️ Admin</div>
+        </div>
+        
+        <!-- Auth Section -->
+        <div id="auth" class="hidden">
+            <div class="auth-form">
+                <h3 id="authTitle">Login</h3>
+                <p>Selected Role: <span id="selectedRole"></span></p>
+                
+                <div id="nameField" class="hidden">
+                    <input type="text" id="name" placeholder="Full Name" />
+                </div>
+                <input type="email" id="email" placeholder="Email" />
+                <input type="password" id="password" placeholder="Password" />
+                
+                <button onclick="submitAuth()" id="authButton">Login</button>
+                <br>
+                <button onclick="toggleAuthMode()" id="toggleButton">Switch to Register</button>
+                <button onclick="goBack()">← Back to Roles</button>
+            </div>
+        </div>
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="hidden">
+            <div class="dashboard">
+                <h2 id="dashboardTitle">Dashboard</h2>
+                <p>Welcome! You are logged in as: <span id="userRole"></span></p>
+                <div id="dashboardContent"></div>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </div>
+        
+        <!-- API Test -->
+        <div>
+            <h3>API Status</h3>
+            <p>Backend: <span id="backendStatus">Testing...</span></p>
+            <p>Frontend: <span id="frontendStatus">Testing...</span></p>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = '';
+        let isLogin = true;
+        
+        // Skip backend test - use mock mode
+        document.getElementById('backendStatus').textContent = '🔄 Mock Mode (Backend Off)';
+            
+        fetch('http://localhost:4200')
+            .then(() => document.getElementById('frontendStatus').textContent = '✅ Running')
+            .catch(() => document.getElementById('frontendStatus').textContent = '❌ Not Running');
+        
+        function selectRole(role) {
+            currentRole = role;
+            document.getElementById('selectedRole').textContent = role;
+            document.getElementById('welcome').classList.add('hidden');
+            document.getElementById('auth').classList.remove('hidden');
+        }
+        
+        function toggleAuthMode() {
+            isLogin = !isLogin;
+            document.getElementById('authTitle').textContent = isLogin ? 'Login' : 'Register';
+            document.getElementById('authButton').textContent = isLogin ? 'Login' : 'Register';
+            document.getElementById('toggleButton').textContent = isLogin ? 'Switch to Register' : 'Switch to Login';
+            
+            if (isLogin) {
+                document.getElementById('nameField').classList.add('hidden');
+            } else {
+                document.getElementById('nameField').classList.remove('hidden');
+            }
+        }
+        
+        function goBack() {
+            document.getElementById('welcome').classList.remove('hidden');
+            document.getElementById('auth').classList.add('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+        
+        async function submitAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+            
+            const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+            const data = isLogin ? 
+                { email, password } : 
+                { email, password, name, role: currentRole.toUpperCase() };
+            
+            // Mock authentication - skip backend
+            console.log('Mock login:', { email, password, name, role: currentRole });
+            showDashboard(currentRole.toUpperCase());
+        }
+        
+        function showDashboard(role) {
+            document.getElementById('auth').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('userRole').textContent = role;
+            document.getElementById('dashboardTitle').textContent = `${role} Dashboard`;
+            
+            let content = '';
+            if (role === 'STUDENT') {
+                content = `
+                    <h4>Student Features:</h4>
+                    <p>📚 Learning Progress: 75%</p>
+                    <p>📝 Next Quiz: JavaScript Basics</p>
+                    <p>🎯 Current Score: 85%</p>
+                `;
+            } else if (role === 'INSTRUCTOR') {
+                content = `
+                    <h4>Instructor Features:</h4>
+                    <p>📖 Total Courses: 12</p>
+                    <p>👥 Active Students: 248</p>
+                    <p>🤖 AI Quiz Generator Ready</p>
+                `;
+            } else if (role === 'ADMIN') {
+                content = `
+                    <h4>Admin Features:</h4>
+                    <p>👤 Total Users: 1,247</p>
+                    <p>📊 System Status: Excellent</p>
+                    <p>⚡ Uptime: 99.8%</p>
+                `;
+            }
+            document.getElementById('dashboardContent').innerHTML = content;
+        }
+        
+        function logout() {
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('welcome').classList.remove('hidden');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('name').value = '';
+        }
+    </script>
+</body>
+</html>

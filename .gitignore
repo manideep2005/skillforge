@@ -1,0 +1,28 @@
+# Angular
+frontend/.angular/
+frontend/node_modules/
+frontend/dist/
+frontend/.nx/cache/
+
+# Java/Spring Boot
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local

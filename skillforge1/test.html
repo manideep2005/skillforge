@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SkillForge Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .form-group { margin: 15px 0; }
+        input, select, button { padding: 10px; margin: 5px; width: 200px; }
+        button { background: #667eea; color: white; border: none; cursor: pointer; }
+        .result { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SkillForge API Test</h1>
+        
+        <h3>Register New User</h3>
+        <div class="form-group">
+            <input type="text" id="regName" placeholder="Full Name" />
+        </div>
+        <div class="form-group">
+            <input type="email" id="regEmail" placeholder="Email" />
+        </div>
+        <div class="form-group">
+            <input type="password" id="regPassword" placeholder="Password" />
+        </div>
+        <div class="form-group">
+            <select id="regRole">
+                <option value="STUDENT">Student</option>
+                <option value="INSTRUCTOR">Instructor</option>
+                <option value="ADMIN">Admin</option>
+            </select>
+        </div>
+        <button onclick="register()">Register</button>
+        
+        <h3>Login</h3>
+        <div class="form-group">
+            <input type="email" id="loginEmail" placeholder="Email" />
+        </div>
+        <div class="form-group">
+            <input type="password" id="loginPassword" placeholder="Password" />
+        </div>
+        <button onclick="login()">Login</button>
+        
+        <div id="result" class="result"></div>
+        
+        <h3>Test Links</h3>
+        <p><a href="http://localhost:4200" target="_blank">Angular Frontend</a></p>
+        <p><a href="http://localhost:8080/api/welcome" target="_blank">Backend API</a></p>
+    </div>
+
+    <script>
+        async function register() {
+            const data = {
+                name: document.getElementById('regName').value,
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                role: document.getElementById('regRole').value
+            };
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                document.getElementById('result').innerHTML = 'Register Success: ' + JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('result').innerHTML = 'Register Error: ' + error.message;
+            }
+        }
+        
+        async function login() {
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                document.getElementById('result').innerHTML = 'Login Success: ' + JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('result').innerHTML = 'Login Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

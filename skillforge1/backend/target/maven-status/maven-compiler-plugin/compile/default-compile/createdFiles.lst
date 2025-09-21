@@ -1,0 +1,13 @@
+com/skillforge/dto/LoginRequest.class
+com/skillforge/entity/Course.class
+com/skillforge/dto/AuthResponse.class
+com/skillforge/controller/WelcomeController.class
+com/skillforge/dto/RegisterRequest.class
+com/skillforge/service/JwtService.class
+com/skillforge/service/AuthService.class
+com/skillforge/config/SecurityConfig.class
+com/skillforge/SkillForgeApplication.class
+com/skillforge/entity/User.class
+com/skillforge/repository/UserRepository.class
+com/skillforge/controller/AuthController.class
+com/skillforge/entity/User$Role.class
