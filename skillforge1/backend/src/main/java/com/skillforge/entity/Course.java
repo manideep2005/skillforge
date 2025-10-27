@@ -113,4 +113,9 @@ public class Course {
     
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    // Additional methods for compatibility
+    public String getInstructor() { return instructorName; }
+    public String getImageUrl() { return "https://picsum.photos/seed/" + id + "/400/200"; }
+    public int getDuration() { return estimatedHours; }
 }

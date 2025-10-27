@@ -1,12 +1,7 @@
 package com.skillforge.service;
 
-import com.skillforge.entity.User;
-import com.skillforge.entity.Course;
-import com.skillforge.entity.Quiz;
-import com.skillforge.entity.UserProgress;
-import com.skillforge.repository.UserRepository;
-import com.skillforge.repository.CourseRepository;
-import com.skillforge.repository.UserProgressRepository;
+import com.skillforge.entity.*;
+import com.skillforge.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +24,15 @@ public class DataInitializationService implements CommandLineRunner {
     private UserProgressRepository userProgressRepository;
     
     @Autowired
+    private ProfileRepository profileRepository;
+    
+    @Autowired
+    private EnrollmentRepository enrollmentRepository;
+    
+    @Autowired
+    private LearningPathRepository learningPathRepository;
+    
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Override
@@ -36,19 +40,45 @@ public class DataInitializationService implements CommandLineRunner {
         initializeUsers();
         initializeCourses();
         initializeUserProgress();
+        initializeProfiles();
+        initializeEnrollments();
+        initializeLearningPaths();
     }
 
     private void initializeUsers() {
-        if (userRepository.count() == 0) {
-            // Create test users
+        System.out.println("Initializing users...");
+        System.out.println("Total users in DB: " + userRepository.count());
+        
+        // Create test users only if they don't exist
+        if (!userRepository.existsByEmail("student@test.com")) {
+            System.out.println("Creating student@test.com");
             User student = new User("student@test.com", passwordEncoder.encode("password123"), "John Student", User.Role.STUDENT);
-            User instructor = new User("instructor@test.com", passwordEncoder.encode("password123"), "Jane Instructor", User.Role.INSTRUCTOR);
-            User admin = new User("admin@test.com", passwordEncoder.encode("password123"), "Admin User", User.Role.ADMIN);
-            User manideep = new User("manideep.gonugunta1802@gmail.com", passwordEncoder.encode("123456789"), "Manideep Gonugunta", User.Role.STUDENT);
-            
-            userRepository.saveAll(Arrays.asList(student, instructor, admin, manideep));
-            System.out.println("✅ Initialized test users");
+            userRepository.save(student);
+            System.out.println("Created student user");
+        } else {
+            System.out.println("student@test.com already exists");
         }
+        
+        if (!userRepository.existsByEmail("instructor@test.com")) {
+            System.out.println("Creating instructor@test.com");
+            User instructor = new User("instructor@test.com", passwordEncoder.encode("password123"), "Jane Instructor", User.Role.INSTRUCTOR);
+            userRepository.save(instructor);
+        }
+        
+        if (!userRepository.existsByEmail("admin@test.com")) {
+            System.out.println("Creating admin@test.com");
+            User admin = new User("admin@test.com", passwordEncoder.encode("password123"), "Admin User", User.Role.ADMIN);
+            userRepository.save(admin);
+        }
+        
+        if (!userRepository.existsByEmail("manideep.gonugunta1802@gmail.com")) {
+            System.out.println("Creating manideep.gonugunta1802@gmail.com");
+            User manideep = new User("manideep.gonugunta1802@gmail.com", passwordEncoder.encode("123456789"), "Manideep Gonugunta", User.Role.STUDENT);
+            userRepository.save(manideep);
+        }
+        
+        System.out.println("✅ Initialized test users");
+        System.out.println("Final user count: " + userRepository.count());
     }
 
     private void initializeCourses() {
@@ -183,6 +213,115 @@ public class DataInitializationService implements CommandLineRunner {
             }
             
             System.out.println("✅ Initialized user progress data");
+        }
+    }
+    
+    private void initializeProfiles() {
+        if (profileRepository.count() == 0) {
+            User student = userRepository.findByEmail("student@test.com").orElse(null);
+            User manideep = userRepository.findByEmail("manideep.gonugunta1802@gmail.com").orElse(null);
+            
+            if (student != null) {
+                Profile profile = new Profile();
+                profile.setUserId(student.getId());
+                profile.setBio("Passionate learner exploring web development and modern technologies.");
+                profile.setTitle("Full Stack Developer Student");
+                profile.setAvatar("https://i.pravatar.cc/150?u=" + student.getId());
+                
+                List<Profile.Skill> skills = Arrays.asList(
+                    new Profile.Skill("JavaScript", 75, "Programming"),
+                    new Profile.Skill("HTML/CSS", 90, "Frontend"),
+                    new Profile.Skill("React", 60, "Frontend")
+                );
+                profile.setSkills(skills);
+                profile.setInterests(Arrays.asList("Web Development", "JavaScript", "React", "Node.js"));
+                profileRepository.save(profile);
+            }
+            
+            if (manideep != null) {
+                Profile profile = new Profile();
+                profile.setUserId(manideep.getId());
+                profile.setBio("Software engineering student passionate about learning new technologies.");
+                profile.setTitle("Software Engineering Student");
+                profile.setAvatar("https://i.pravatar.cc/150?u=" + manideep.getId());
+                
+                List<Profile.Skill> skills = Arrays.asList(
+                    new Profile.Skill("JavaScript", 65, "Programming"),
+                    new Profile.Skill("Java", 80, "Programming"),
+                    new Profile.Skill("Python", 70, "Programming")
+                );
+                profile.setSkills(skills);
+                profile.setInterests(Arrays.asList("Software Engineering", "Web Development", "AI/ML"));
+                profileRepository.save(profile);
+            }
+            
+            System.out.println("✅ Initialized user profiles");
+        }
+    }
+    
+    private void initializeEnrollments() {
+        if (enrollmentRepository.count() == 0) {
+            User student = userRepository.findByEmail("student@test.com").orElse(null);
+            List<Course> courses = courseRepository.findAll();
+            
+            if (student != null && !courses.isEmpty()) {
+                for (Course course : courses) {
+                    Enrollment enrollment = new Enrollment();
+                    enrollment.setUserId(student.getId());
+                    enrollment.setCourseId(course.getId());
+                    
+                    if (course.getTitle().equals("HTML & CSS Fundamentals")) {
+                        enrollment.setProgress(100);
+                        enrollment.setStatus("COMPLETED");
+                        enrollment.setTotalTimeSpent(360);
+                    } else if (course.getTitle().equals("Advanced JavaScript")) {
+                        enrollment.setProgress(75);
+                        enrollment.setStatus("IN_PROGRESS");
+                        enrollment.setTotalTimeSpent(480);
+                    } else {
+                        enrollment.setProgress(25);
+                        enrollment.setStatus("IN_PROGRESS");
+                        enrollment.setTotalTimeSpent(120);
+                    }
+                    
+                    enrollmentRepository.save(enrollment);
+                }
+            }
+            
+            System.out.println("✅ Initialized enrollments");
+        }
+    }
+    
+    private void initializeLearningPaths() {
+        if (learningPathRepository.count() == 0) {
+            // Full Stack Web Developer Path
+            LearningPath fullStackPath = new LearningPath();
+            fullStackPath.setTitle("Full Stack Web Developer");
+            fullStackPath.setDescription("Master both frontend and backend development with modern technologies");
+            fullStackPath.setIcon("🌐");
+            fullStackPath.setLevel("BEGINNER");
+            fullStackPath.setEstimatedDuration(24); // 24 weeks
+            fullStackPath.setCategory("Web Development");
+            
+            List<Course> courses = courseRepository.findAll();
+            List<String> courseIds = new ArrayList<>();
+            for (Course course : courses) {
+                courseIds.add(course.getId());
+            }
+            fullStackPath.setCourseIds(courseIds);
+            
+            // Data Science Path
+            LearningPath dataPath = new LearningPath();
+            dataPath.setTitle("Data Science Specialist");
+            dataPath.setDescription("Learn data analysis, machine learning, and visualization techniques");
+            dataPath.setIcon("📊");
+            dataPath.setLevel("INTERMEDIATE");
+            dataPath.setEstimatedDuration(16); // 16 weeks
+            dataPath.setCategory("Data Science");
+            dataPath.setCourseIds(new ArrayList<>());
+            
+            learningPathRepository.saveAll(Arrays.asList(fullStackPath, dataPath));
+            System.out.println("✅ Initialized learning paths");
         }
     }
 }

@@ -6,11 +6,24 @@ spring:
     default-property-inclusion: non_null
 
 jwt:
-  secret: skillforge_jwt_secret_key
+  secret: skillforge_jwt_secret_key_that_is_long_enough_for_256_bits_security
   expiration: 86400000
 
 openai:
   api-key: your_openai_api_key_here
+
+# AI API Keys for adaptive quiz generation
+perplexity:
+  api:
+    key: ""
+
+gemini:
+  api:
+    key: AIzaSyCooS_ZiG9_H7BZ5kBpH4A-H5X-WsyiBNQ
+
+huggingface:
+  api:
+    key: "hf_YOUR_TOKEN_HERE"
 
 server:
   port: 8080

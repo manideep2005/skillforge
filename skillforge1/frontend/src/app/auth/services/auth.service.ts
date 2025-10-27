@@ -16,9 +16,14 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
+  userId: string;
   email: string;
   name: string;
   role: string;
+}
+
+export interface ForgotPasswordResponse {
+  resetToken: string;
 }
 
 @Injectable({
@@ -35,6 +40,14 @@ export class AuthService {
 
   register(request: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, request);
+  }
+
+  forgotPassword(email: string): Observable<ForgotPasswordResponse> {
+    return this.http.post<ForgotPasswordResponse>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/reset-password`, { token, newPassword });
   }
 
   logout() {

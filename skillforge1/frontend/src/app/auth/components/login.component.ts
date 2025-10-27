@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="auth-container">
       <!-- Background Elements -->
@@ -127,7 +128,8 @@ import { AuthService } from '../services/auth.service';
                   </div>
                   <div class="form-error" *ngIf="authForm.get('password')?.invalid && authForm.get('password')?.touched">
                     <i class="fas fa-exclamation-circle"></i>
-                    Password is required
+                    <span *ngIf="authForm.get('password')?.errors?.['required']">Password is required</span>
+                    <span *ngIf="authForm.get('password')?.errors?.['minlength']">Password must be at least 8 characters</span>
                   </div>
                 </div>
                 
@@ -137,7 +139,7 @@ import { AuthService } from '../services/auth.service';
                     <span class="checkmark"></span>
                     Remember me
                   </label>
-                  <a href="#" class="forgot-password">Forgot Password?</a>
+                  <a href="#" class="forgot-password" (click)="openForgotPassword($event)">Forgot Password?</a>
                 </div>
                 
                 <button type="submit" [disabled]="authForm.invalid" class="btn-primary">
@@ -163,6 +165,39 @@ import { AuthService } from '../services/auth.service';
                 </div>
               </form>
               
+              <div *ngIf="showForgot" class="forgot-container">
+                <h3 class="forgot-title">Reset your password</h3>
+                <div class="form-group">
+                  <label class="form-label">Email Address</label>
+                  <div class="input-group">
+                    <span class="input-icon">
+                      <i class="fas fa-envelope"></i>
+                    </span>
+                    <input type="email" [(ngModel)]="forgotEmail" placeholder="Enter your email" class="form-control">
+                  </div>
+                </div>
+                <div class="form-group" *ngIf="resetToken">
+                  <label class="form-label">New Password</label>
+                  <div class="input-group">
+                    <span class="input-icon">
+                      <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" [(ngModel)]="newPassword" placeholder="Enter new password" class="form-control">
+                  </div>
+                </div>
+                <div class="forgot-actions">
+                  <button class="btn-secondary" (click)="closeForgot()">Cancel</button>
+                  <button class="btn-primary" *ngIf="!resetToken" (click)="requestReset()">Request Reset</button>
+                  <button class="btn-primary" *ngIf="resetToken" (click)="submitReset()">Reset Password</button>
+                </div>
+                <div class="forgot-hint" *ngIf="!resetToken">
+                  A reset link/token will be generated. In production this is emailed to you.
+                </div>
+                <div class="reset-token" *ngIf="resetToken">
+                  Token generated (for demo): {{resetToken}}
+                </div>
+              </div>
+              
               <div class="auth-footer">
                 <p class="switch-mode">
                   <span *ngIf="isLogin">Don't have an account? </span>
@@ -184,7 +219,12 @@ import { AuthService } from '../services/auth.service';
     </div>
   `,
   styles: [`
-    .auth-container {
+    .forgot-container { margin-top: 20px; padding: 16px; border: 1px dashed #e1e5e9; border-radius: 12px; background: #fafafa; }
+    .forgot-title { margin-bottom: 12px; }
+    .forgot-actions { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+    .forgot-hint { color: #64748b; font-size: 12px; margin-top: 6px; }
+    .reset-token { margin-top: 8px; font-size: 12px; color: #0ea5e9; word-break: break-all; }
+  .auth-container {
       position: relative;
       min-height: 100vh;
       overflow: hidden;
@@ -666,6 +706,10 @@ export class LoginComponent implements OnInit {
   showPassword: boolean = false;
   isLoading: boolean = false;
   particles: any[] = [];
+  showForgot: boolean = false;
+  forgotEmail: string = '';
+  resetToken: string = '';
+  newPassword: string = '';
 
   constructor(
     private fb: FormBuilder,
@@ -676,7 +720,7 @@ export class LoginComponent implements OnInit {
     this.authForm = this.fb.group({
       name: [''],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
+      password: ['', [Validators.required, Validators.minLength(8)]]
     });
   }
 
@@ -710,6 +754,40 @@ export class LoginComponent implements OnInit {
     }
   }
   
+  openForgotPassword(event: Event) {
+    event.preventDefault();
+    this.showForgot = true;
+    this.resetToken = '';
+    this.newPassword = '';
+    this.forgotEmail = this.authForm.get('email')?.value || '';
+  }
+
+  closeForgot() {
+    this.showForgot = false;
+  }
+
+  requestReset() {
+    if (!this.forgotEmail) { alert('Enter your email'); return; }
+    this.authService.forgotPassword(this.forgotEmail).subscribe({
+      next: (resp) => {
+        this.resetToken = resp.resetToken;
+        alert('Reset token generated. In production, check your email.');
+      },
+      error: () => alert('Failed to request password reset')
+    });
+  }
+
+  submitReset() {
+    if (!this.resetToken || !this.newPassword) { alert('Enter token and new password'); return; }
+    this.authService.resetPassword(this.resetToken, this.newPassword).subscribe({
+      next: () => {
+        alert('Password reset successfully. Please login with your new password.');
+        this.showForgot = false;
+      },
+      error: () => alert('Failed to reset password')
+    });
+  }
+  
   togglePassword() {
     this.showPassword = !this.showPassword;
   }
@@ -718,6 +796,7 @@ export class LoginComponent implements OnInit {
     this.isLogin = !this.isLogin;
     if (!this.isLogin) {
       this.authForm.get('name')?.setValidators([Validators.required]);
+      this.authForm.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
       // For student registration, redirect to onboarding first
       if (this.selectedRole === 'student') {
         this.router.navigate(['/onboarding'], { 
@@ -730,8 +809,10 @@ export class LoginComponent implements OnInit {
       }
     } else {
       this.authForm.get('name')?.clearValidators();
+      this.authForm.get('password')?.setValidators([Validators.required]);
     }
     this.authForm.get('name')?.updateValueAndValidity();
+    this.authForm.get('password')?.updateValueAndValidity();
   }
 
   onSubmit() {
@@ -751,6 +832,7 @@ export class LoginComponent implements OnInit {
         this.authService.login(formData).subscribe({
           next: (response) => {
             localStorage.setItem('token', response.token);
+            localStorage.setItem('userId', response.userId);
             localStorage.setItem('userRole', response.role);
             localStorage.setItem('userEmail', response.email);
             localStorage.setItem('userName', response.name);
@@ -770,6 +852,7 @@ export class LoginComponent implements OnInit {
         this.authService.register(registerData).subscribe({
           next: (response) => {
             localStorage.setItem('token', response.token);
+            localStorage.setItem('userId', response.userId);
             localStorage.setItem('userRole', response.role);
             localStorage.setItem('userEmail', response.email);
             localStorage.setItem('userName', response.name);
@@ -778,6 +861,7 @@ export class LoginComponent implements OnInit {
             this.redirectBasedOnRole(response.role);
           },
           error: (error) => {
+            console.error('Registration error:', error);
             alert('Registration failed! Email might already exist.');
           }
         });

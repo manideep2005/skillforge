@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { ExternalApiService } from '../../services/external-api.service';
+import { DashboardService } from '../../services/dashboard.service';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -39,13 +39,17 @@ import { ExternalApiService } from '../../services/external-api.service';
               <i class="icon">📊</i>
               <span>Dashboard</span>
             </div>
-            <div class="menu-item" [class.active]="activeTab === 'courses'" (click)="setActiveTab('courses')">
+            <div class="menu-item" (click)="navigateTo('/courses')">
               <i class="icon">📚</i>
               <span>My Courses</span>
             </div>
-            <div class="menu-item" [class.active]="activeTab === 'quiz'" (click)="setActiveTab('quiz')">
+            <div class="menu-item" (click)="navigateTo('/quiz')">
               <i class="icon">🧠</i>
               <span>Quizzes</span>
+            </div>
+            <div class="menu-item" (click)="navigateTo('/adaptive-quiz')">
+              <i class="icon">🤖</i>
+              <span>AI Quiz Generator</span>
             </div>
             <div class="menu-item" [class.active]="activeTab === 'progress'" (click)="setActiveTab('progress')">
               <i class="icon">📈</i>
@@ -142,9 +146,9 @@ import { ExternalApiService } from '../../services/external-api.service';
                   <h3>Quick Actions</h3>
                 </div>
                 <div class="actions-grid">
-                  <div class="action-item" (click)="setActiveTab('quiz')">
-                    <div class="action-icon">🧠</div>
-                    <span>Take Quiz</span>
+                  <div class="action-item" (click)="navigateTo('/adaptive-quiz')">
+                    <div class="action-icon">🤖</div>
+                    <span>AI Quiz Generator</span>
                   </div>
                   <div class="action-item" (click)="setActiveTab('courses')">
                     <div class="action-icon">📚</div>
@@ -167,25 +171,18 @@ import { ExternalApiService } from '../../services/external-api.service';
                   <h3>Recent Activity</h3>
                 </div>
                 <div class="activity-list">
-                  <div class="activity-item">
-                    <div class="activity-icon completed">✅</div>
+                  <div class="activity-item" *ngFor="let act of dashboardData.recentActivity">
+                    <div class="activity-icon" [ngClass]="getActivityClass(act.type)">{{ getActivityIcon(act.type) }}</div>
                     <div class="activity-content">
-                      <p><strong>Completed</strong> JavaScript Functions Quiz</p>
-                      <span class="activity-time">2 hours ago</span>
+                      <p>{{ act.message }}</p>
+                      <span class="activity-time">{{ act.createdAt | date:'short' }}</span>
                     </div>
                   </div>
-                  <div class="activity-item">
-                    <div class="activity-icon started">🚀</div>
+                  <div class="activity-item" *ngIf="!dashboardData.recentActivity || dashboardData.recentActivity.length === 0">
+                    <div class="activity-icon started">ℹ️</div>
                     <div class="activity-content">
-                      <p><strong>Started</strong> Async Programming Module</p>
-                      <span class="activity-time">1 day ago</span>
-                    </div>
-                  </div>
-                  <div class="activity-item">
-                    <div class="activity-icon achievement">🏆</div>
-                    <div class="activity-content">
-                      <p><strong>Earned</strong> "Week Streak" Badge</p>
-                      <span class="activity-time">3 days ago</span>
+                      <p>No recent activity yet.</p>
+                      <span class="activity-time">—</span>
                     </div>
                   </div>
                 </div>
@@ -253,6 +250,27 @@ import { ExternalApiService } from '../../services/external-api.service';
                   </div>
                   <button class="btn-primary" *ngIf="course.progress < 100">{{course.progress > 0 ? 'Continue' : 'Start'}} Course</button>
                   <button class="btn-secondary" *ngIf="course.progress === 100">Review Course</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="courses-header" style="margin-top: 32px;">
+              <h2>Available Courses</h2>
+            </div>
+            <div class="courses-grid">
+              <div class="course-card" *ngFor="let course of dashboardData.availableCourses">
+                <div class="course-image">
+                  <img [src]="'https://picsum.photos/seed/' + course.id + '/400/200'" [alt]="course.title" class="course-img">
+                  <div class="course-badge">{{course.difficulty || 'General'}}</div>
+                </div>
+                <div class="course-content">
+                  <h3>{{course.title}}</h3>
+                  <p>{{course.description}}</p>
+                  <div class="course-meta">
+                    <span>⏱️ {{course.estimatedHours || 0}}h</span>
+                    <span>⭐ {{course.rating || 0}}</span>
+                  </div>
+                  <button class="btn-primary" (click)="enrollInCourse(course.id)">Enroll</button>
                 </div>
               </div>
             </div>
@@ -397,42 +415,23 @@ import { ExternalApiService } from '../../services/external-api.service';
               <p>Celebrate your learning milestones</p>
             </div>
             
-            <div class="achievements-grid">
-              <div class="achievement-card earned">
-                <div class="achievement-icon">🏆</div>
-                <h3>First Course Complete</h3>
-                <p>Completed your first course on SkillForge</p>
-                <div class="achievement-date">Earned 2 weeks ago</div>
-              </div>
-              
-              <div class="achievement-card earned">
-                <div class="achievement-icon">🔥</div>
-                <h3>Week Streak</h3>
-                <p>Maintained a 7-day learning streak</p>
-                <div class="achievement-date">Earned 3 days ago</div>
-              </div>
-              
-              <div class="achievement-card earned">
-                <div class="achievement-icon">🎯</div>
-                <h3>Quiz Master</h3>
-                <p>Scored above 90% on 3 consecutive quizzes</p>
-                <div class="achievement-date">Earned 1 week ago</div>
-              </div>
-              
-              <div class="achievement-card locked">
-                <div class="achievement-icon">⭐</div>
-                <h3>Course Completionist</h3>
-                <p>Complete 10 courses</p>
-                <div class="achievement-progress">8/10 courses</div>
-              </div>
-              
-              <div class="achievement-card locked">
-                <div class="achievement-icon">🚀</div>
-                <h3>Speed Learner</h3>
-                <p>Complete a course in under 2 days</p>
-                <div class="achievement-progress">Locked</div>
+            <div class="achievements-grid" *ngIf="dashboardData.achievements && dashboardData.achievements.length > 0; else noAchievements">
+              <div class="achievement-card earned" *ngFor="let a of dashboardData.achievements">
+                <div class="achievement-icon">{{ a.icon || '🏆' }}</div>
+                <h3>{{ a.title }}</h3>
+                <p>{{ a.description }}</p>
+                <div class="achievement-date">Earned {{ a.earnedAt | date:'mediumDate' }}</div>
               </div>
             </div>
+            <ng-template #noAchievements>
+              <div class="achievements-grid">
+                <div class="achievement-card">
+                  <div class="achievement-icon">ℹ️</div>
+                  <h3>No Achievements Yet</h3>
+                  <p>Keep learning to unlock achievements!</p>
+                </div>
+              </div>
+            </ng-template>
           </div>
         </main>
       </div>
@@ -1737,35 +1736,46 @@ export class StudentDashboardComponent implements OnInit {
   userName: string = '';
   userId: string = '';
 
-  constructor(private router: Router, private http: HttpClient, private externalApiService: ExternalApiService) {}
+  constructor(private router: Router, private http: HttpClient, private dashboardService: DashboardService) {}
   
   ngOnInit() {
     this.userEmail = localStorage.getItem('userEmail') || '';
     this.userName = localStorage.getItem('userName') || 'Student';
+    this.userId = localStorage.getItem('userId') || '';
     this.loadDashboardData();
   }
   
   loadDashboardData() {
-    // Load data from external APIs
-    this.externalApiService.getCourses().subscribe({
-      next: (courses) => {
-        const userCourses = courses.slice(0, 5);
+    this.loadExternalData();
+    
+    if (!this.userId) {
+      this.loadMockData();
+      return;
+    }
+    this.dashboardService.getStudentDashboard(this.userId).subscribe({
+      next: (data: any) => {
         this.dashboardData = {
-          stats: {
-            totalCourses: userCourses.length,
-            completedCourses: userCourses.filter(c => c.progress === 100).length,
-            totalStudyHours: userCourses.reduce((sum, c) => sum + parseInt(c.duration), 0),
-            streak: Math.floor(Math.random() * 15) + 5
-          },
-          courses: userCourses,
-          recentActivity: [
-            { type: 'completed', title: 'JavaScript Functions Quiz', time: '2 hours ago' },
-            { type: 'started', title: 'React Components Module', time: '1 day ago' },
-            { type: 'achievement', title: 'Week Streak Badge', time: '3 days ago' }
-          ]
+          stats: data.stats || this.generateMockStats(),
+          enrolledCourses: data.enrolledCourses || [],
+          availableCourses: data.availableCourses || [],
+          recentActivity: data.recentActivity || this.generateMockActivity(),
+          achievements: data.achievements || this.generateMockAchievements()
         };
+        const courses = (data.enrolledCourses || []).map((p: any) => ({
+          title: p.courseName,
+          description: 'Your enrolled course',
+          duration: Math.max(1, Math.round((p.totalTimeSpent || 0) / 60)).toString(),
+          modules: (p.completedModules || []).length,
+          rating: 4.5,
+          progress: p.overallProgress || 0,
+          image: 'https://picsum.photos/seed/' + p.courseId + '/400/200'
+        }));
+        this.dashboardData.courses = courses.length > 0 ? courses : this.generateMockCourses();
       },
-      error: (error) => console.error('Error loading courses:', error)
+      error: (err: any) => {
+        console.error('Error loading dashboard:', err);
+        this.loadMockData();
+      }
     });
   }
   
@@ -1794,6 +1804,130 @@ export class StudentDashboardComponent implements OnInit {
     if (course.progress === 100) return 'Completed';
     if (course.progress > 0) return 'In Progress';
     return 'New';
+  }
+
+  getActivityClass(type: string): string {
+    switch (type) {
+      case 'COURSE_COMPLETED':
+      case 'MODULE_COMPLETED':
+        return 'completed';
+      case 'QUIZ_ATTEMPT':
+        return 'achievement';
+      case 'ENROLL':
+      case 'PROGRESS_UPDATE':
+      default:
+        return 'started';
+    }
+  }
+
+  getActivityIcon(type: string): string {
+    switch (type) {
+      case 'COURSE_COMPLETED':
+        return '🏆';
+      case 'MODULE_COMPLETED':
+        return '✅';
+      case 'QUIZ_ATTEMPT':
+        return '🧠';
+      case 'ENROLL':
+        return '📚';
+      case 'PROGRESS_UPDATE':
+      default:
+        return '🚀';
+    }
+  }
+
+  enrollInCourse(courseId: string) {
+    if (!this.userId) return;
+    this.dashboardService.enrollInCourse(this.userId, courseId).subscribe({
+      next: () => this.loadDashboardData(),
+      error: (err: any) => console.error('Enroll failed:', err)
+    });
+  }
+
+  loadExternalData() {
+    this.http.get('https://api.github.com/search/repositories?q=javascript+tutorial&sort=stars&order=desc&per_page=10').subscribe({
+      next: (data: any) => {
+        const repos = data.items.map((repo: any) => ({
+          id: repo.id,
+          title: repo.name.replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+          description: repo.description || 'Learn from this popular repository',
+          estimatedHours: Math.floor(Math.random() * 20) + 5,
+          rating: Math.round((repo.stargazers_count / 1000) * 10) / 10,
+          difficulty: repo.stargazers_count > 10000 ? 'Advanced' : repo.stargazers_count > 1000 ? 'Intermediate' : 'Beginner',
+          language: repo.language || 'General'
+        }));
+        if (!this.dashboardData.availableCourses) {
+          this.dashboardData.availableCourses = repos;
+        }
+      },
+      error: (err: any) => console.log('GitHub API unavailable, using mock data')
+    });
+  }
+  
+  loadMockData() {
+    this.dashboardData = {
+      stats: this.generateMockStats(),
+      courses: this.generateMockCourses(),
+      availableCourses: this.generateMockAvailableCourses(),
+      recentActivity: this.generateMockActivity(),
+      achievements: this.generateMockAchievements()
+    };
+  }
+  
+  generateMockStats() {
+    return {
+      totalCourses: Math.floor(Math.random() * 15) + 5,
+      completedCourses: Math.floor(Math.random() * 8) + 2,
+      totalStudyHours: Math.floor(Math.random() * 100) + 50,
+      streak: Math.floor(Math.random() * 30) + 5
+    };
+  }
+  
+  generateMockCourses() {
+    const courses = [
+      { title: 'Advanced JavaScript', description: 'Master modern JS concepts', duration: '12h', modules: 8, rating: 4.8, progress: 75, language: 'JavaScript' },
+      { title: 'React Fundamentals', description: 'Build dynamic web apps', duration: '15h', modules: 10, rating: 4.9, progress: 45, language: 'React' },
+      { title: 'Node.js Backend', description: 'Server-side development', duration: '18h', modules: 12, rating: 4.7, progress: 100, language: 'Node.js' },
+      { title: 'Python Data Science', description: 'Analyze data with Python', duration: '20h', modules: 15, rating: 4.6, progress: 30, language: 'Python' }
+    ];
+    return courses.map((course, index) => ({
+      ...course,
+      image: `https://picsum.photos/seed/${index + 100}/400/200`
+    }));
+  }
+  
+  generateMockAvailableCourses() {
+    return [
+      { id: '1', title: 'Vue.js Complete Guide', description: 'Progressive JavaScript framework', estimatedHours: 16, rating: 4.8, difficulty: 'Intermediate' },
+      { id: '2', title: 'TypeScript Mastery', description: 'Strongly typed JavaScript', estimatedHours: 12, rating: 4.9, difficulty: 'Advanced' },
+      { id: '3', title: 'Docker Containers', description: 'Containerization made easy', estimatedHours: 10, rating: 4.7, difficulty: 'Intermediate' },
+      { id: '4', title: 'GraphQL APIs', description: 'Modern API development', estimatedHours: 14, rating: 4.6, difficulty: 'Advanced' },
+      { id: '5', title: 'MongoDB Database', description: 'NoSQL database fundamentals', estimatedHours: 8, rating: 4.5, difficulty: 'Beginner' },
+      { id: '6', title: 'AWS Cloud Services', description: 'Cloud computing essentials', estimatedHours: 22, rating: 4.8, difficulty: 'Advanced' }
+    ];
+  }
+  
+  generateMockActivity() {
+    return [
+      { type: 'COURSE_COMPLETED', message: 'Completed Node.js Backend course', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+      { type: 'MODULE_COMPLETED', message: 'Finished Module 5: Async Programming', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000) },
+      { type: 'QUIZ_ATTEMPT', message: 'Scored 92% on JavaScript Basics quiz', createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000) },
+      { type: 'ENROLL', message: 'Enrolled in React Fundamentals', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      { type: 'PROGRESS_UPDATE', message: 'Reached 75% progress in JavaScript course', createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+    ];
+  }
+  
+  generateMockAchievements() {
+    return [
+      { icon: '🏆', title: 'Course Completionist', description: 'Completed your first course', earnedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      { icon: '🔥', title: 'Week Streak', description: 'Studied for 7 consecutive days', earnedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+      { icon: '🧠', title: 'Quiz Master', description: 'Scored 90%+ on 5 quizzes', earnedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+      { icon: '⚡', title: 'Fast Learner', description: 'Completed a module in under 2 hours', earnedAt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+    ];
+  }
+
+  navigateTo(route: string) {
+    this.router.navigate([route]);
   }
 
   logout() {
