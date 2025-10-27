@@ -1,28 +1,37 @@
-# Angular
-frontend/.angular/
-frontend/node_modules/
-frontend/dist/
-frontend/.nx/cache/
+# Dependencies
+node_modules/
+*/node_modules/
 
-# Java/Spring Boot
-backend/target/
-backend/.mvn/
-backend/mvnw
-backend/mvnw.cmd
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
 
-# IDE
+# Angular cache (THIS WAS THE PROBLEM!)
+.angular/
+*/.angular/
+skillforge1/frontend/.angular/
+
+# IDE files
 .vscode/
 .idea/
-*.iml
+*.swp
+*.swo
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
-logs/
+npm-debug.log*
 
-# Environment
+# Environment files
 .env
 .env.local
+.env.production
+
+# Temporary files
+*.tmp
+*.temp
